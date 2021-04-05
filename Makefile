@@ -1,33 +1,45 @@
+CC = gcc
+CFLAGS = -g -Wall -Wextra -pedantic -std=c11 -fPIC
 
-CFLAGS = -g -Wall -Wextra -pedantic -std=gnu99 -fPIC 
+PLUGIN_SRCS = swapbg.c mirrorh.c mirrorv.c tile.c expose.c
+SRCS = imgproc.c pnglite.c $(PLUGIN_SRCS)
+
+OBJS = $(SRCS:%.c=%.o)
+PLUGINS = $(PLUGIN_SRCS:%.c=plugins/%.so)
+
+%.o : %.c
+	$(CC) $(CFLAGS) -c $*.c -o $*.o
+
+plugins/%.so : %.o
+	mkdir -p plugins
+	$(CC) -o plugins/$*.so -shared $*.o
+
+all : imgproc $(PLUGINS)
+
+imgproc : imgproc.o image.o pnglite.o
+	$(CC) -export-dynamic -o $@ imgproc.o image.o pnglite.o -lz -ldl
+
+plugins/swapbg.so : swapbg.o
+
+plugins/expose.so : expose.o
+
+plugins/tile.so : tile.o
+
+plugins/mirrorv.so : mirrorv.o
+
+plugins/mirrorh.so : mirrorh.o
 
 
-imgproc: image.o imgproc.o tile.o mirrorh.o mirrorv.o swapbg.o pnglite.o
-	gcc -o $@ image.o imgproc.o tile.o mirrorh.o mirrorv.o swapbg.o pnglite.o
+clean :
+	rm -f *.o imgproc plugins/*.so depend.mak
 
-imgproc.o: imgproc.c image.c pnglite.c image_plugin.h
-	gcc $(CFLAGS) -c imgproc.c image.c pnglite.c
+# Running
+#    make depend
+# will automatically generate header file dependencies.
+depend :
+	$(CC) $(CFLAGS) -M $(SRCS) >> depend.mak
 
-image.o: image.h image.c
-	gcc $(CFLAGS) -c image.c
+depend.mak :
+	touch $@
 
-pnglite.o: pnglite.h pnglite.c
-	gcc $(CFLAGS) -c pnglite.c
-
-tile.o: tile.c image_plugin.h
-	gcc $(CFLAGS) -c tile.c
-
-expose.o: expose.c image_plugin.h
-	gcc $(CFLAGS) -c expose.c
-
-mirrorh.o: mirrorh.c image_plugin.h
-	gcc $(CFLAGS) -c mirrorh.c
-
-mirrorv.o: mirrorv.c image_plugin.h
-	gcc $(CFLAGS) -c mirrorv.c
-
-swapbg.o: swapbg.c image_plugin.h
-	gcc $(CFLAGS) -c swapbg.c
-
-clean:
-	rm -f *.o imgproc *~
+include depend.mak
