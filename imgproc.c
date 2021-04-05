@@ -1,8 +1,43 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include "pnglite.h"
 #include "image.h"
+
+struct Plugin {
+    void *handle;
+    const char *(*get_plugin_name)(void);
+    const char *(*get_plugin_desc)(void);
+    void *(*parse_arguments)(int num_args, char *args[]);
+    struct Image *(*transform_image)(struct Image *source, void *arg_data);
+};
+
+struct Plugin * init_plugin(void) {
+  struct Plugin *newPlug;
+  const char * plugDirect;
+
+  if (getenv("PLUGIN_DIR") != NULL) {
+    // we assume it has pathname of plugin direct
+    plugDirect = getenv("PLUGIN_DIR");
+  } else {
+    // assume that the plugin shared libraries are in the ./plugins directory
+    plugDirect = "./plugins";
+  }
+  // once we have plugin directory path
+  DIR *direct = opendir(plugDirect);
+  // use readdir to find all of the files in the plugin directory that end in ".so"
+  // dynamically load all of the files ending in ".so" with dlopen
+  // use dlsym to find the addresses of the plugin’s get_plugin_name, get_plugin_desc, parse_arguments, and transform_image funcs
+  // save these into struct Plugin *newPLug
+  
+
+  closedir(direct);
+
+  return newPlug;
+  
+}
 
 int main(int argc, char* argv[]) {
     if(argc > 6) {
@@ -11,32 +46,25 @@ int main(int argc, char* argv[]) {
     }
     char* command = argv[1];
 
-    struct Image* image = img_read_png(argv[3]);
-
     if (argc == 1) {
       printf("Usage: imgproc <command> [<command args...>]\n");
       printf("Commands are: \n");
       printf("  list\n");
       printf("  exec <plugin> <input img> <output img> [<plugin args...>]\n");
     }
+
+    // HERES WHERE ALL THE IMPORTANT INFO IS 
+    struct Plugin * plugList = init_plugin();
     
     if(argc < 5) {
       if(strcmp(command, "list") == 0) {
-            printf("Loaded 5 plugin(s)\n");
             /*
             
             NEED TO ITERATE THROUGH PLUGINS!
-            
+	   
             */
-	    printf("Loaded 5 plugin(s)\n");
-	    printf(" mirrorh: mirror image horizontally\n");
-	    printf(" mirrorv: mirror image vertically\n");
-	    printf("  swapbg: swap blue and green color component values\n");
-	    printf("    tile: tile source image in an NxN arrangement\n");
-	    printf("  expose: adjust the intensity of all pixels");
-
-
-            return 0;
+	    
+	    return 0;
         } else {
             printf("ERROR: Expected \"list\" as an input\n");
             return 1;
@@ -44,8 +72,8 @@ int main(int argc, char* argv[]) {
     }
 
     char* plugin = argv[2];
-    char* inputImg = argv[3];
-    char* outputImg = argv[4];
+    struct Image* inputImg = img_read_png(argv[3]);
+    struct Image* outputImg = img_read_png(argv[4]);
     // argv[5] might be plugin args
     
     if(argc >= 5) {
