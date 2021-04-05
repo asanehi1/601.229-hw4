@@ -7,15 +7,15 @@ struct Arguments {
 	int dummy;
 };
 
-const char *get_plugin_name(void) {
+const char *get_plugin_name3(void) {
 	return "mirrorv";
 }
 
-const char *get_plugin_desc(void) {
+const char *get_plugin_desc3(void) {
 	return "mirror image vertically";
 }
 
-void *parse_arguments(int num_args, char *args[]) {
+void *parse_arguments3(int num_args, char *args[]) {
 	(void) args; // this is just to avoid a warning about an unused parameter
 
 	if (num_args != 0) {
@@ -24,7 +24,7 @@ void *parse_arguments(int num_args, char *args[]) {
 	return calloc(1, sizeof(struct Arguments));
 }
 
-struct Image *transform_image(struct Image *source, void *arg_data) {
+struct Image *transform_image3(struct Image *source, void *arg_data) {
     struct Arguments *args = arg_data;
 
     // Allocate a result Image

@@ -12,15 +12,15 @@ struct Arguments {
 	int dummy;
 };
 
-const char *get_plugin_name(void) {
+const char *get_plugin_name5(void) {
 	return "swapbg";
 }
 
-const char *get_plugin_desc(void) {
+const char *get_plugin_desc5(void) {
 	return "swap blue and green color component values";
 }
 
-void *parse_arguments(int num_args, char *args[]) {
+void *parse_arguments5(int num_args, char *args[]) {
 	(void) args; // this is just to avoid a warning about an unused parameter
 
 	if (num_args != 0) {
@@ -36,7 +36,7 @@ static uint32_t swap_bg(uint32_t pix) {
 	return img_pack_pixel(r, b, g, a);
 }
 
-struct Image *transform_image(struct Image *source, void *arg_data) {
+struct Image *transform_image5(struct Image *source, void *arg_data) {
 	struct Arguments *args = arg_data;
 
 	// Allocate a result Image

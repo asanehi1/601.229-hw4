@@ -6,7 +6,8 @@
 
 int main(int argc, char* argv[]) {
     if(argc > 6) {
-        printf("ERROR: Too many arguments\n");
+      // I think u can have a lotttt of plugins
+      //printf("ERROR: Too many arguments\n");
     }
     char* command = argv[1];
 
