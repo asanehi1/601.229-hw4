@@ -34,6 +34,18 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
 		return NULL;
 	}
 
+	//unsigned num_pixels = source->width * source->height;
+	unsigned width = source->width;
+	unsigned height = source->height;
+	for (unsigned row = 0; row < width; row++) {
+		for (unsigned col = 0; col < height; col++) {
+			uint8_t r, g, b, a;
+			img_unpack_pixel(source->data[width * row + col], &r, &g, &b, &a);
+			//need help to calculate the upside down index
+			out->data[row] = img_pack_pixel(r, g, b, a);
+		}
+	}
+
     free(args);
     return out;
 }
