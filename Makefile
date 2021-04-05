@@ -1,6 +1,7 @@
 
 CFLAGS = -g -Wall -Wextra -pedantic -std=gnu99 -fPIC 
 
+
 imgproc: image.o imgproc.o tile.o mirrorh.o mirrorv.o swapbg.o pnglite.o
 	gcc -o $@ image.o imgproc.o tile.o mirrorh.o mirrorv.o swapbg.o pnglite.o
 
