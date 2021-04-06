@@ -26,6 +26,18 @@ void *parse_arguments(int num_args, char *args[]) {
     return tile_arg;
 }
 
+unsigned get_excess(unsigned *excess, unsigned *start, unsigned *length) {
+	if(start == length - 1) {
+		if(excess > 0) {
+			excess = excess - 1;
+			start = 0;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 struct Image *transform_image(struct Image *source, void *arg_data) {
     struct Arguments *args = arg_data;
     
@@ -36,13 +48,28 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
 		return NULL;
 	}
 
-	  //unsigned num_pixels = source->width * source->height;
 	unsigned width = source->width;
 	unsigned height = source->height;
+
+	unsigned mini_w = width / args->tiling_factor;
+	unsigned mini_h = height / args->tiling_factor;
+
+	unsigned excess_w = width % args->tiling_factor;
+	unsigned excess_h = height % args->tiling_factor;
+
+	unsigned h, w;
+	unsigned start_width = 0, start_height = 0;
+
 	for (unsigned row = 0; row < width; row++) {
+		w = get_excess(&excess_w, &start_width, &mini_w);
+
 		for (unsigned col = 0; col < height; col++) {
-			
+			h = get_excess(&excess_h, &start_height, &mini_h);
+			out->data[width * row + w + col + h] = source->data[args->tiling_factor * (width * row + col)];
+			start_height = start_height + 1;
 		}
+
+		start_width = start_width + 1;
 	}
 
 

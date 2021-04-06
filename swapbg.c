@@ -47,6 +47,7 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
 	}
 
 	unsigned num_pixels = source->width * source->height;
+	
 	for (unsigned i = 0; i < num_pixels; i++) {
 		out->data[i] = swap_bg(source->data[i]);
 	}
