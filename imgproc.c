@@ -3,8 +3,10 @@
 #include <string.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <dlfcn.h>
 #include "pnglite.h"
 #include "image.h"
+#include "image_plugin.h"
 
 struct Plugin {
     void *handle;
@@ -14,9 +16,13 @@ struct Plugin {
     struct Image *(*transform_image)(struct Image *source, void *arg_data);
 };
 
-struct Plugin * init_plugin(void) {
-  struct Plugin *newPlug;
-  const char * plugDirect;
+
+
+// if plugin param is "list", printf all the needed values
+struct Plugin * init_plugin() {
+  // on piazza they said no more than 15
+  struct Plugin *newPlug = (struct Plugin *) malloc(15 * sizeof(struct Plugin));  
+  char *plugDirect;
 
   if (getenv("PLUGIN_DIR") != NULL) {
     // we assume it has pathname of plugin direct
@@ -25,12 +31,48 @@ struct Plugin * init_plugin(void) {
     // assume that the plugin shared libraries are in the ./plugins directory
     plugDirect = "./plugins";
   }
-  // once we have plugin directory path
+  
   DIR *direct = opendir(plugDirect);
+  //open directory with plugin direct path
+  if (direct  == NULL) {
+    printf("Error: Not valid directory");
+  }
+
+  struct dirent* read;
+  // i is counter for structs
+  int i = 0;
+  
   // use readdir to find all of the files in the plugin directory that end in ".so"
-  // dynamically load all of the files ending in ".so" with dlopen
-  // use dlsym to find the addresses of the plugin’s get_plugin_name, get_plugin_desc, parse_arguments, and transform_image funcs
-  // save these into struct Plugin *newPLug
+  while ((read = readdir(direct)) != NULL) {
+    // this code checks if it has .so in file name
+    char *period = strrchr(read->d_name, '.');
+    if (period && !strcmp(period, ".so")) {
+      printf("found a .so file!\n");
+
+      // dynamically load all of the files ending in ".so" with dlopen
+      // must load whole path name (not just .so file name)
+       char *filePath = (char *) calloc(256, sizeof(char));
+       strcat(filePath, plugDirect);
+       strcat(filePath, "/");
+       strcat(filePath, read->d_name);
+       printf("%s\n", filePath);
+       
+       (newPlug + i)->handle = dlopen(filePath, RTLD_LAZY);
+       
+       //*(void **) &((newPlug + i)->get_plugin_name) = dlsym((newPlug + i)->handle, "get_plugin_name");
+       //printf((newPlug + i)->get_plugin_name());
+       
+       dlsym((newPlug + i)->handle, "get_plugin_name");
+       dlsym((newPlug + i)->handle, "get_plugin_desc");
+       dlsym((newPlug + i)->handle, "parse_arguments");
+       dlsym((newPlug + i)->handle, "transform_image");
+       // these should be saved into newPlug (TODO, asked on piazza)
+              
+       dlclose((newPlug + i)->handle);
+       i++;
+       free(filePath);
+      }
+  }
   
 
   closedir(direct);
@@ -38,6 +80,13 @@ struct Plugin * init_plugin(void) {
   return newPlug;
   
 }
+
+
+
+
+
+
+
 
 int main(int argc, char* argv[]) {
     if(argc > 6) {
@@ -53,18 +102,20 @@ int main(int argc, char* argv[]) {
       printf("  exec <plugin> <input img> <output img> [<plugin args...>]\n");
     }
 
-    // HERES WHERE ALL THE IMPORTANT INFO IS 
+    // array of plugins
     struct Plugin * plugList = init_plugin();
     
     if(argc < 5) {
       if(strcmp(command, "list") == 0) {
-            /*
-            
-            NEED TO ITERATE THROUGH PLUGINS!
-	   
-            */
-	    
-	    return 0;
+	//iterate thru plugList, doens't work til I cast correctly in plug_init func (asked on piazza)
+	/*
+	int i = 0;
+	while ((plugList+i)->get_plugin_name() != '\0') {
+	  printf("%s: %s\n", (plugList + i)->get_plugin_name(),  (plugList + i)->get_plugin_desc());
+	  i++;
+	}
+	*/
+	return 0;
         } else {
             printf("ERROR: Expected \"list\" as an input\n");
             return 1;
@@ -75,6 +126,8 @@ int main(int argc, char* argv[]) {
     struct Image* inputImg = img_read_png(argv[3]);
     struct Image* outputImg = img_read_png(argv[4]);
     // argv[5] might be plugin args
+
+
     
     if(argc >= 5) {
       if(strcmp("exec", command) != 0) {
