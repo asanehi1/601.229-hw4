@@ -7,15 +7,15 @@ struct Arguments {
 	int dummy;
 };
 
-const char *get_plugin_name3(void) {
+const char *get_plugin_name(void) {
 	return "mirrorv";
 }
 
-const char *get_plugin_desc3(void) {
+const char *get_plugin_desc(void) {
 	return "mirror image vertically";
 }
 
-void *parse_arguments3(int num_args, char *args[]) {
+void *parse_arguments(int num_args, char *args[]) {
 	(void) args; // this is just to avoid a warning about an unused parameter
 
 	if (num_args != 0) {
@@ -24,7 +24,7 @@ void *parse_arguments3(int num_args, char *args[]) {
 	return calloc(1, sizeof(struct Arguments));
 }
 
-struct Image *transform_image3(struct Image *source, void *arg_data) {
+struct Image *transform_image(struct Image *source, void *arg_data) {
     struct Arguments *args = arg_data;
 
     // Allocate a result Image
@@ -34,17 +34,14 @@ struct Image *transform_image3(struct Image *source, void *arg_data) {
 		return NULL;
 	}
 
-	//unsigned num_pixels = source->width * source->height;
 	unsigned width = source->width;
 	unsigned height = source->height;
 	for (unsigned row = 0; row < width; row++) {
 		for (unsigned col = 0; col < height; col++) {
-			uint8_t r, g, b, a;
-			img_unpack_pixel(source->data[width * row + col], &r, &g, &b, &a);
-			//need help to calculate the upside down index
-			out->data[row] = img_pack_pixel(r, g, b, a);
+			out->data[row * width + col] = source->data[(height - 1 - row)*width + col];
 		}
 	}
+
 
     free(args);
     return out;

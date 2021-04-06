@@ -138,14 +138,14 @@ int main(int argc, char* argv[]) {
 
     if(argc == 5) {
       if(strcmp("swapbg", plugin) == 0) {
-	//do swapbg code
+	      //do swapbg code
       } else if(strcmp("mirrorh", plugin) == 0) {
-	//do mirrorh code
+	      //do mirrorh code
       } else if(strcmp("mirrorv", plugin) == 0) {
         //do mirrorv code
       }  else {
-	printf("ERROR: 4 inputs expected\n");
-	return 1;
+        printf("ERROR: 4 inputs expected\n");
+        return 1;
       }
     }
 
