@@ -120,6 +120,7 @@ int get_image(char * plugin, char* argv[], int argc, struct Image *source,
         delete(plugList);
         return 1;
       }
+      
       img_write_png(im, argv[4]); //write ouput image to file
       img_destroy(im); //destroy output image
       img_destroy(source);
@@ -188,44 +189,45 @@ int main(int argc, char* argv[]) {
   // argv[5] might be plugin args                            
 
   if(argc >= 5) {
-    if(strcmp("exec", command) != 0) {
-      printf("ERROR: Expected \"exec\" as an input\n");
-      usage_info();
-      img_destroy(inputImg);
-      delete(plugList);
-      return 1;
-    }
+    return get_image(plugin, argv, argc, inputImg, plugList, n); 
+    // if(strcmp("exec", command) != 0) {
+    //   printf("ERROR: Expected \"exec\" as an input\n");
+    //   usage_info();
+    //   img_destroy(inputImg);
+    //   delete(plugList);
+    //   return 1;
+    // }
   }
 
-  if(argc == 5) {
-    if(strcmp("swapbg", plugin) == 0) {
-      return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                               
-    } else if(strcmp("mirrorh", plugin) == 0) {
-      return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                                   
-    } else if(strcmp("mirrorv", plugin) == 0) {
-      return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                                    
-    }  else {
-      printf("ERROR: Invalid Arguments\n");
-      usage_info();
-      img_destroy(inputImg);
-      delete(plugList);
-      return 1;
-    }
-  }
+  // if(argc == 5) {
+  //   if(strcmp("swapbg", plugin) == 0) {
+  //     return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                               
+  //   } else if(strcmp("mirrorh", plugin) == 0) {
+  //     return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                                   
+  //   } else if(strcmp("mirrorv", plugin) == 0) {
+  //     return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                                    
+  //   }  else {
+  //     printf("ERROR: Invalid Arguments\n");
+  //     usage_info();
+  //     img_destroy(inputImg);
+  //     delete(plugList);
+  //     return 1;
+  //   }
+  // }
 
-  if(argc == 6) {
-    if(strcmp("tile", plugin) == 0) {
-      return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                             
-    } else if(strcmp("expose", argv[2]) == 0) {
-      return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                
-    } else {
-      printf("ERROR: Invalid Arguments\n");
-      usage_info();
-      img_destroy(inputImg);
-      delete(plugList);
-      return 1;
-    }
-  }
+  // if(argc == 6) {
+  //   if(strcmp("tile", plugin) == 0) {
+  //     return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                             
+  //   } else if(strcmp("expose", argv[2]) == 0) {
+  //     return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                
+  //   } else {
+  //     printf("ERROR: Invalid Arguments\n");
+  //     usage_info();
+  //     img_destroy(inputImg);
+  //     delete(plugList);
+  //     return 1;
+  //   }
+  // }
 
   //img_destroy(inputImg);
   //delete(plugList);
