@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "image_plugin.h"
+#include <string.h>
+#include <ctype.h>
 
 struct Arguments {
 	int tiling_factor;
@@ -14,10 +16,23 @@ const char *get_plugin_desc(void) {
 	return "tile source image in an NxN arrangement";
 }
 
+int isDigit(char args[]) {
+	for (size_t i = 0; i < strlen(args); i++) {
+		if(!isdigit(args[i])) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void *parse_arguments(int num_args, char *args[]) {
 	(void) args; // this is just to avoid a warning about an unused parameter
 
 	if (num_args != 1) {
+		return NULL;
+	}
+
+	if(isDigit(args[0]) == 1) {
 		return NULL;
 	}
 

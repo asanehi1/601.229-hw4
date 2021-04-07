@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "image_plugin.h"
+#include <string.h>
+#include <ctype.h>
 
 struct Arguments {
 	float expose_factor;
@@ -14,6 +16,15 @@ const char *get_plugin_desc(void) {
 	return "adjust the intensity of all pixels";
 }
 
+int isFloat(char args[]) {
+	for (size_t i = 0; i < strlen(args); i++) {
+		if(!isdigit(args[i]) && args[i] != '.') {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void *parse_arguments(int num_args, char *args[]) {
 	(void) args; // this is just to avoid a warning about an unused parameter
 
@@ -21,14 +32,13 @@ void *parse_arguments(int num_args, char *args[]) {
 		return NULL;
 	}
 
-	float num = atof(args[0]);
-	if(num < 0) {
+	if(isFloat(args[0]) == 1) {
 		return NULL;
 	}
 
 
     struct Arguments *tile_arg = calloc(1,sizeof(struct Arguments));
-    tile_arg->expose_factor = num;
+    tile_arg->expose_factor = atof(args[0]);
 
     return tile_arg;
 }
