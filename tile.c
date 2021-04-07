@@ -68,7 +68,7 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
 		for (unsigned col = 0; col < height; col++) {
 			h = get_excess(&excess_h, &start_height, &mini_h);
 
-			unsigned s_index = args->tiling_factor * col + row;
+			unsigned s_index = args->tiling_factor * (col + row);
 			unsigned d_index = width * (row + w) + (col + h);
 
 			out->data[d_index] = source->data[s_index];

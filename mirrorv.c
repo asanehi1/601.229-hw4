@@ -36,8 +36,9 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
 
 	unsigned width = source->width;
 	unsigned height = source->height;
-	for (unsigned row = 0; row < width; row++) {
-		for (unsigned col = 0; col < height; col++) {
+	
+	for (unsigned row = 0; row < height; row++) {
+		for (unsigned col = 0; col < width; col++) {
 			out->data[row * width + col] = source->data[(height - 1 - row)*width + col];
 		}
 	}

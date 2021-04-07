@@ -66,8 +66,6 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
 		return NULL;
 	}
 
-	printf("factor: %f", args->expose_factor);
-
 	unsigned num_pixels = source->width * source->height;
 	for (unsigned i = 0; i < num_pixels; i++) {
 		out->data[i] = calc_color_component(source->data[i], args->expose_factor);

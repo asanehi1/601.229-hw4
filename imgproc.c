@@ -118,7 +118,8 @@ int main(int argc, char* argv[]) {
   int n = 0;                                                                                                                                                                                    
   struct Plugin * plugList = init_plugin(&n);
 
-  if(argc == 2 && strcmp(command, "list") == 0) {
+  if(argc < 5) {
+  if(strcmp(command, "list") == 0) {
     //iterate thru plugList                                                                                                                                                                             
 
     for (int i = 0; i < n; i++) {
@@ -132,6 +133,7 @@ int main(int argc, char* argv[]) {
     printf("ERROR: Expected \"list\" as an input\n");
     delete(plugList);
     return 1;
+  }
   }
   
 

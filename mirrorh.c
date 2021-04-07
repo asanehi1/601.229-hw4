@@ -39,14 +39,14 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
     //unsigned num_pixels = source->width * source->height;
 	unsigned width = source->width;
 	unsigned height = source->height;
-	printf("HERE1\n");
-	for (unsigned row = 0; row < width; row++) {
-		for (unsigned col = 0; col < height; col++) {
-			out->data[row * width + col] = source->data[row * width  + (width - 1 - col)];
+	for (unsigned row = 0; row < height; row++) {
+		for (unsigned col = 0; col < width; col++) {
+			
+			unsigned d_index = row * width + col;
+			unsigned s_index = row * width + (width - 1 - col);
+			out->data[d_index] = source->data[s_index];
 		}
 	}
-
-	printf("HERE2\n");
 
     free(args);
     return out;
