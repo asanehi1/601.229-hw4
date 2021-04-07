@@ -42,58 +42,62 @@ void *parse_arguments(int num_args, char *args[]) {
     return tile_arg;
 }
 
-unsigned get_excess(unsigned *excess, unsigned *start, unsigned *length) {
-	if(start == length - 1) {
-		if(excess > 0) {
-			excess = excess - 1;
-			start = 0;
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
 struct Image *transform_image(struct Image *source, void *arg_data) {
     struct Arguments *args = arg_data;
-    // Allocate a result Image
-	struct Image *out = img_create(source->width, source->height);
-	if (!out) {
-		free(args);
-		return NULL;
-	}
+    // Allocate a result Image                                                                                                                                                                
+        struct Image *out = img_create(source->width, source->height);
+        if (!out) {
+                free(args);
+                return NULL;
+        }
 
-	unsigned width = source->width;
-	unsigned height = source->height;
+        unsigned width = source->width;
+        unsigned height = source->height;
+        int n = args->tiling_factor;
 
-	unsigned mini_w = width / args->tiling_factor;
-	unsigned mini_h = height / args->tiling_factor;
+        unsigned mini_w = width / n;
+        unsigned mini_h = height / n;
 
-	unsigned excess_w = width % args->tiling_factor;
-	unsigned excess_h = height % args->tiling_factor;
+        int excess_w = width % n;
+        int excess_h = height % n;
 
-	unsigned h, w;
-	unsigned start_width = 0, start_height = 0;
+        unsigned h = 0,  w = 0;
+        unsigned exH = 0, exW = 0;
 
-	printf("HERE\n");
+        int x = 0;
 
-	for (unsigned row = 0; row < width; row++) {
-		w = get_excess(&excess_w, &start_width, &mini_w);
+        for (int a = 0; a < n; a++) {
+          if (excess_h > 0) {
+            excess_h --;
+            h = mini_h + 1;
+          } else {
+            h = mini_h;
+          }
+          for(int b = 0; b < n; b++) {
+            if (excess_w > 0) {
+              printf("%d\n", excess_w);
+              excess_w --;
+              exW ++;
+              w = mini_w + 1;
+              x = 1;
+            } else {
+              w = mini_w;
+            }
+            for (int i = 0; i < h; i++) {
+              for (int j = 0; j < w; j++) {
+                out->data[(a * mini_h * width) + (b * (mini_w + x)) + j + i * width] = source->data[(i * width * n) + j * n];
+              }
+            }
+          }
+          excess_w = exW;
+ exW = 0;
+          x = 0;
 
-		for (unsigned col = 0; col < height; col++) {
-			h = get_excess(&excess_h, &start_height, &mini_h);
-
-			unsigned s_index = args->tiling_factor * (col + row);
-			unsigned d_index = width * (row + w) + (col + h);
-
-			out->data[d_index] = source->data[s_index];
-			start_height = start_height + 1;
-		}
-
-		start_width = start_width + 1;
-	}
+        }
 
 
     free(args);
     return out;
 }
+
+
