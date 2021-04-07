@@ -42,7 +42,6 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
 	printf("HERE1\n");
 	for (unsigned row = 0; row < width; row++) {
 		for (unsigned col = 0; col < height; col++) {
-			printf("row: %d, col: %d\n", row, col);
 			out->data[row * width + col] = source->data[row * width  + (width - 1 - col)];
 		}
 	}

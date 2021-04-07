@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "image_plugin.h"
 
@@ -21,7 +22,7 @@ void *parse_arguments(int num_args, char *args[]) {
 	}
 
     struct Arguments *tile_arg = calloc(1,sizeof(struct Arguments));
-    tile_arg->tiling_factor = atoi(args[5]);
+    tile_arg->tiling_factor = atoi(args[0]);
 
     return tile_arg;
 }
@@ -40,7 +41,6 @@ unsigned get_excess(unsigned *excess, unsigned *start, unsigned *length) {
 
 struct Image *transform_image(struct Image *source, void *arg_data) {
     struct Arguments *args = arg_data;
-    
     // Allocate a result Image
 	struct Image *out = img_create(source->width, source->height);
 	if (!out) {
@@ -60,12 +60,18 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
 	unsigned h, w;
 	unsigned start_width = 0, start_height = 0;
 
+	printf("HERE\n");
+
 	for (unsigned row = 0; row < width; row++) {
 		w = get_excess(&excess_w, &start_width, &mini_w);
 
 		for (unsigned col = 0; col < height; col++) {
 			h = get_excess(&excess_h, &start_height, &mini_h);
-			out->data[width * row + w + col + h] = source->data[args->tiling_factor * (width * row + col)];
+
+			unsigned s_index = args->tiling_factor * col + row;
+			unsigned d_index = width * (row + w) + (col + h);
+
+			out->data[d_index] = source->data[s_index];
 			start_height = start_height + 1;
 		}
 

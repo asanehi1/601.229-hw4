@@ -42,7 +42,6 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
 		}
 	}
 
-
     free(args);
     return out;
 }

@@ -16,7 +16,6 @@ struct Plugin {
     struct Image *(*transform_image)(struct Image *source, void *arg_data);
 };
 
-
 void delete(struct Plugin * plugList) {
   int i = 0;
   while ((plugList+i)->handle != NULL) {
@@ -25,9 +24,8 @@ void delete(struct Plugin * plugList) {
   }
 }
 
-
 // if plugin param is "list", printf all the needed values                                                                                                                                                  
-struct Plugin * init_plugin(int * n) {
+struct Plugin * init_plugin(int * num_plugin) {
   // on piazza they said no more than 15                                                                                                                                                                    
   struct Plugin *newPlug = (struct Plugin *) malloc(15 * sizeof(struct Plugin));
   char *plugDirect;
@@ -55,7 +53,6 @@ struct Plugin * init_plugin(int * n) {
     // this code checks if it has .so in file name                                                                                                                                                          
     char *period = strrchr(read->d_name, '.');
     if (period && !strcmp(period, ".so")) {
-      //printf("found a .so file!\n");                                                                                                                                                                      
 
       // dynamically load all of the files ending in ".so" with dlopen                                                                                                                                      
       // must load whole path name (not just .so file name)                                                                                                                                                 
@@ -66,8 +63,6 @@ struct Plugin * init_plugin(int * n) {
       //printf("%s\n", filePath);                                                                                                                                                                          
 
       void * handle = dlopen(filePath, RTLD_LAZY);
-
-
 
       if (dlsym(handle, "get_plugin_name") != NULL) {
         (newPlug + i)->handle = handle;
@@ -81,23 +76,15 @@ struct Plugin * init_plugin(int * n) {
       
       }
 
-
       //dlclose(handle); (this is too early)                                                                                                                                                               
       free(filePath);
     }
   }
 
-  *n = i;
-
-
+  *num_plugin = i;
   closedir(direct);
-
   return newPlug;
-
 }
-
-
-
 
 int get_image(char * plugin, char* argv[], int argc, struct Image *source, 
               struct Plugin *plugList, int num) {
@@ -113,12 +100,10 @@ int get_image(char * plugin, char* argv[], int argc, struct Image *source,
   return 0;
 }
 
-
-
 int main(int argc, char* argv[]) {
-  if(argc > 6) {
-    // I think u can have a lotttt of plugins                                                                                                                                                             
-    //printf("ERROR: Too many arguments\n");                                                                                                                                                              
+  if(argc > 6) {                                                                                                                                                           
+    printf("ERROR: Too many arguments\n");  
+    return 1;                                                                                                                                                            
   }
   char* command = argv[1];
 
@@ -133,23 +118,22 @@ int main(int argc, char* argv[]) {
   int n = 0;                                                                                                                                                                                    
   struct Plugin * plugList = init_plugin(&n);
 
-  if(argc < 5) {
-    if(strcmp(command, "list") == 0) {
-      //iterate thru plugList                                                                                                                                                                             
+  if(argc == 2 && strcmp(command, "list") == 0) {
+    //iterate thru plugList                                                                                                                                                                             
 
-      for (int i = 0; i < n; i++) {
-        printf("%s: %s\n", (plugList + i)->get_plugin_name(),  (plugList + i)->get_plugin_desc());
-      }
-
-      delete(plugList);
-      return 0;
-
-    } else {
-      printf("ERROR: Expected \"list\" as an input\n");
-      delete(plugList);
-      return 1;
+    for (int i = 0; i < n; i++) {
+      printf("%s: %s\n", (plugList + i)->get_plugin_name(),  (plugList + i)->get_plugin_desc());
     }
+
+    delete(plugList);
+    return 0;
+
+  } else {
+    printf("ERROR: Expected \"list\" as an input\n");
+    delete(plugList);
+    return 1;
   }
+  
 
   char* plugin = argv[2];
   struct Image* inputImg = img_read_png(argv[3]);
@@ -171,7 +155,7 @@ int main(int argc, char* argv[]) {
     } else if(strcmp("mirrorv", plugin) == 0) {
       return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                                    
     }  else {
-      printf("ERROR: 4 inputs expected\n");
+      printf("ERROR: Invalid Argument\n");
       delete(plugList);
       return 1;
     }
@@ -183,7 +167,7 @@ int main(int argc, char* argv[]) {
     } else if(strcmp("expose", argv[2]) == 0) {
       return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                
     } else {
-      printf("ERROR: 6 inputs expected\n");
+      printf("ERROR: Invalid Argument\n");
     }
   }
 
