@@ -16,16 +16,17 @@ struct Plugin {
   struct Image *(*transform_image)(struct Image *source, void *arg_data);
 };
 
-void delete(struct Plugin * plugList) {
-  int i = 0;
-  while ((plugList+i)->handle != NULL) {
-    dlclose((plugList+i)->handle);
-    i++;
+void delete(struct Plugin ** plugList, int plugin_size) {
+  for(int i = 0; i < plugin_size; i += sizeof(struct Plugin*)) {
+    dlclose((*(plugList+i))->handle);
+    //free(*(plugList+i));
   }
+
+  free(plugList);
 }
 
 // if plugin param is "list", printf all the needed values                                                                                                                                                  
-struct Plugin * init_plugin(int * num_plugin) {
+struct Plugin ** init_plugin(int * num_plugin) {
   char *plugDirect;
 
   if (getenv("PLUGIN_DIR") != NULL) {
@@ -44,20 +45,23 @@ struct Plugin * init_plugin(int * num_plugin) {
   }
 
   struct dirent* read;
-  // i is counter for structs                                                                                                                                                                               
-  int i = 0;
 
   // on piazza they said no more than 15                                                                                                                                                                    
-  struct Plugin *newPlug = malloc(15 * sizeof(struct Plugin));
+  // struct Plugin *newPlug = malloc(15 * sizeof(struct Plugin));
+  struct Plugin **newPlug = malloc(sizeof(struct Plugin *));
   if(!newPlug) {
     printf("Error: Could not allocate Plugin\n");
     closedir(direct);
     return NULL;
   }
 
+  // i is counter for structs                                                                                                                                                                               
+  int i = 0;
+
   // use readdir to find all of the files in the plugin directory that end in ".so"                                                                                                                         
   while ((read = readdir(direct)) != NULL) {
-    // this code checks if it has .so in file name                                                                                                                                                          
+    // this code checks if it has .so in file name
+                                                                                                                                     
     char *period = strrchr(read->d_name, '.');
     if (period && !strcmp(period, ".so")) {
 
@@ -66,31 +70,30 @@ struct Plugin * init_plugin(int * num_plugin) {
       char *filePath = (char *) calloc(256, sizeof(char));
       if(!filePath) {
         printf("Error: Could not allocate filepath\n");
-        delete(newPlug);
+        delete(newPlug, i);
         closedir(direct);
         return NULL;
       }
 
       strcat(filePath, plugDirect);
       strcat(filePath, "/");
-      strcat(filePath, read->d_name);
-      //printf("%s\n", filePath);                                                                                                                                                                          
+      strcat(filePath, read->d_name);                                                                                                                                                                       
 
       void * handle = dlopen(filePath, RTLD_LAZY);
+      struct  Plugin *p = malloc(sizeof(struct Plugin));
 
       if (dlsym(handle, "get_plugin_name") != NULL) {
-        (newPlug + i)->handle = handle;
+        (p)->handle = handle;
 
-        *(void **) &((newPlug + i)->get_plugin_name) = dlsym((newPlug + i)->handle, "get_plugin_name");
-        *(void **) &((newPlug + i)->get_plugin_desc) = dlsym((newPlug + i)->handle, "get_plugin_desc");
-        *(void **) &((newPlug + i)->parse_arguments) = dlsym((newPlug + i)->handle, "parse_arguments");
-        *(void **) &((newPlug + i)->transform_image) = dlsym((newPlug + i)->handle, "transform_image");
+        *(void **) &((p)->get_plugin_name) = dlsym((p)->handle, "get_plugin_name");
+        *(void **) &((p)->get_plugin_desc) = dlsym((p)->handle, "get_plugin_desc");
+        *(void **) &((p)->parse_arguments) = dlsym((p)->handle, "parse_arguments");
+        *(void **) &((p)->transform_image) = dlsym((p)->handle, "transform_image");
+        *(newPlug + i) = p;
 
-        i++;
-      
+        i = i + sizeof(struct Plugin *);
       }
-
-      //dlclose(handle); (this is too early)                                                                                                                                                               
+                                                                                                                                                            
       free(filePath);
     }
   }
@@ -101,30 +104,30 @@ struct Plugin * init_plugin(int * num_plugin) {
 }
 
 int get_image(char * plugin, char* argv[], int argc, struct Image *source, 
-              struct Plugin *plugList, int num) {
+              struct Plugin **plugList, int plugin_size) {
                 
- for (int i = 0; i < num; i++) {
-    if(strcmp((plugList+i)->get_plugin_name(), plugin) == 0) {
+ for (int i = 0; i < plugin_size; i += sizeof(struct Plugin*)) {
+    if(strcmp((*(plugList+i))->get_plugin_name(), plugin) == 0) {
 
-      void *p = (plugList+i)->parse_arguments(argc - 5, argv + 5);
+      void *p = (*(plugList+i))->parse_arguments(argc - 5, argv + 5); //parse argments to plugin
       if(!p) {
         printf("ERROR: Failed to parse arguments\n");
         img_destroy(source);
-        delete(plugList);
+        delete(plugList, plugin_size);
         return 1;
       }
 
-      struct Image *im = (plugList + i)->transform_image(source, p); //get output image
+      struct Image *im = (*(plugList + i))->transform_image(source, p); //get output image
       if(!im) {
         img_destroy(source);
-        delete(plugList);
+        delete(plugList, plugin_size);
         return 1;
       }
       
       img_write_png(im, argv[4]); //write ouput image to file
       img_destroy(im); //destroy output image
-      img_destroy(source);
-      delete(plugList);
+      img_destroy(source); //destroy input image
+      delete(plugList, plugin_size);
 
       return 0;
     }
@@ -141,101 +144,50 @@ void usage_info() {
 }
 
 int main(int argc, char* argv[]) {
-  if(argc > 6) {                                                                                                                                                           
-    printf("ERROR: Too many arguments\n");  
-    return 1;                                                                                                                                                            
-  }
-
   char* command = argv[1];
 
   if (argc == 1) {
     usage_info();
-    return 1;
+    return 0;
   }
 
   // array of plugins 
-  int n = 0;                                                                                                                                                                                    
-  struct Plugin * plugList = init_plugin(&n);
+  int plugin_size = 0;                                                                                                                                                                                    
+  struct Plugin **plugList = init_plugin(&plugin_size);
   if(plugList == NULL) {
     return 1;
   }
 
   if(argc < 5) {
     if(argc == 2 && strcmp(command, "list") == 0) {
-      //iterate thru plugList                                                                                                                                                                             
-
-      for (int i = 0; i < n; i++) {
-        printf("%s: %s\n", (plugList + i)->get_plugin_name(),  (plugList + i)->get_plugin_desc());
+      //iterate through plugList                                                                                                                                                                           
+      for (int i = 0; i < plugin_size; i += sizeof(struct Plugin*)) {
+        printf("%s: %s\n", (*(plugList + i))->get_plugin_name(),  (*(plugList + i))->get_plugin_desc());
       }
 
-      delete(plugList);
+      delete(plugList, plugin_size);
       return 0;
 
     } else {
-      printf("ERROR: Expected 1 argument, \"list\" as an input\n");
+      printf("ERROR: Invalid Number of Arguments\n");
       usage_info();
-      delete(plugList);
+      delete(plugList, plugin_size);
       return 1;
     }
   }
   
-
-  char* plugin = argv[2];
   struct Image* inputImg = img_read_png(argv[3]);
   if(!inputImg) {
-    printf("Error: Could not open inputImage\n");
+    printf("ERROR: Could not open input Image\n");
     return 1;
-  }
-  // argv[5] might be plugin args                            
+  }                         
 
   if(argc >= 5) {
-    return get_image(plugin, argv, argc, inputImg, plugList, n); 
-    // if(strcmp("exec", command) != 0) {
-    //   printf("ERROR: Expected \"exec\" as an input\n");
-    //   usage_info();
-    //   img_destroy(inputImg);
-    //   delete(plugList);
-    //   return 1;
-    // }
+    return get_image(argv[2], argv, argc, inputImg, plugList, plugin_size); 
   }
 
-  // if(argc == 5) {
-  //   if(strcmp("swapbg", plugin) == 0) {
-  //     return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                               
-  //   } else if(strcmp("mirrorh", plugin) == 0) {
-  //     return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                                   
-  //   } else if(strcmp("mirrorv", plugin) == 0) {
-  //     return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                                    
-  //   }  else {
-  //     printf("ERROR: Invalid Arguments\n");
-  //     usage_info();
-  //     img_destroy(inputImg);
-  //     delete(plugList);
-  //     return 1;
-  //   }
-  // }
-
-  // if(argc == 6) {
-  //   if(strcmp("tile", plugin) == 0) {
-  //     return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                             
-  //   } else if(strcmp("expose", argv[2]) == 0) {
-  //     return get_image(plugin, argv, argc, inputImg, plugList, n);                                                                                                                                                                
-  //   } else {
-  //     printf("ERROR: Invalid Arguments\n");
-  //     usage_info();
-  //     img_destroy(inputImg);
-  //     delete(plugList);
-  //     return 1;
-  //   }
-  // }
-
-  //img_destroy(inputImg);
-  //delete(plugList);
   return 0;
 }
-
-
-
 
 
 

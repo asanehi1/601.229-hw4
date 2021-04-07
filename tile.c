@@ -83,14 +83,14 @@ struct Image *transform_image(struct Image *source, void *arg_data) {
             } else {
               w = mini_w;
             }
-            for (int i = 0; i < h; i++) {
-              for (int j = 0; j < w; j++) {
+            for (unsigned i = 0; i < h; i++) {
+              for (unsigned j = 0; j < w; j++) {
                 out->data[(a * mini_h * width) + (b * (mini_w + x)) + j + i * width] = source->data[(i * width * n) + j * n];
               }
             }
           }
           excess_w = exW;
- exW = 0;
+          exW = 0;
           x = 0;
 
         }
